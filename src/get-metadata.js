@@ -11,6 +11,26 @@ type Metadata = {
 */
 
 /**
+ *
+ * @param {object} document DOM object
+ * @param {string} selector selector string
+ * @returns {string} data from HTML <head> content
+ */
+function querySelector(document, selector) {
+  if (document.querySelector(selector)) {
+    if (selector.includes("keywords")) {
+      return document
+        .querySelector(selector)
+        .getAttribute("content")
+        .split(",");
+    }
+    return document.querySelector(selector).getAttribute("content");
+  }
+
+  return null;
+}
+
+/**
  * Gets the URL, site name, title, description, keywords, and author info out of the <head> meta tags from a given html string.
  * 1. Get the URL from the <meta property="og:url"> tag.
  * 2. Get the site name from the <meta property="og:site_name"> tag.
@@ -23,13 +43,25 @@ type Metadata = {
  * @returns A Metadata object with data from the HTML <head>
  */
 export default function getMetadata(html) {
-  // TODO: delete and replace this with your code
-  return {
-    url: "https://www.example.com/something/to-test",
-    siteName: "Example Site Name",
-    title: "Example Title",
-    description: "Example description.",
-    keywords: ["example", "keywords"],
-    author: "Example Author",
-  };
+  const parser = new DOMParser();
+  const document = parser.parseFromString(html, "text/html");
+
+  let title = null;
+  const url = querySelector(document, "meta[property='og:url']");
+  const siteName = querySelector(document, "meta[property='og:site_name']");
+  const description =
+    querySelector(document, "meta[property='og:description']") ||
+    querySelector(document, "meta[name='description']");
+  const author = querySelector(document, "meta[name='author']");
+  let keywords = querySelector(document, "meta[name='keywords']");
+
+  if (document.getElementsByTagName("title")[0]) {
+    title = document.getElementsByTagName("title")[0].innerHTML;
+  }
+
+  if (keywords && keywords.every((keyword) => keyword.length === 0)) {
+    keywords = [];
+  }
+
+  return { url, siteName, title, description, keywords, author };
 }
